@@ -1,7 +1,7 @@
 {
     "data":{
-        "earthquakes_path":"examples/example_01/",
-        "earthquakes_file":"earthquakes_example_01.csv"
+        "earthquakes_path":"tests/test_data/",
+        "earthquakes_file":"test_data_handler.csv"
     },
     "point_profile":{
         "profile_start": [0.0, 0.0],
