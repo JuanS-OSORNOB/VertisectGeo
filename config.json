@@ -1,0 +1,13 @@
+{
+    "data":{
+        "earthquakes_path":"examples/example_01/",
+        "earthquakes_file":"earthquakes_example_01.csv"
+    },
+    "point_profile":{
+        "profile_start": [0.0, 0.0],
+        "profile_end": [1.0, 1.0],
+        "profile_width_km": 10.0,
+        "profile_depth_km": 250.0
+    }
+}
+  
