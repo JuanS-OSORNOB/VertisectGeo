@@ -1,13 +1,12 @@
 {
     "data":{
-        "earthquakes_path":"tests/test_data/",
-        "earthquakes_file":"test_data_handler.csv"
+        "earthquakes_path":"C:/Users/ecanc/OneDrive - Universidad EIA/PROYECTO_CARIBE/PAPER/03_Outputs/01_earthquakes/",
+        "earthquakes_file":"earthquakes_relocalized.csv"
     },
-    "point_profile":{
-        "profile_start": [0.0, 0.0],
-        "profile_end": [1.0, 1.0],
-        "profile_width_km": 10.0,
-        "profile_depth_km": 250.0
+    "point_profiles":{
+        "profile_start": [-74.5, 11.82],
+        "profile_end": [-72.48, 9.51],
+        "profile_width": 100.0,
+        "profile_depth": 250.0
     }
 }
-  
