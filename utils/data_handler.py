@@ -10,6 +10,7 @@ class Datahandler():
         #Standardize depth values to positive
         if (self.data["Depth"] < 0).any():
             self.data["Depth"] = -self.data["Depth"]
+
         self.profile_start_km, self.profile_end_km = self.coordinates_to_km(profile_start, profile_end)
 
     def load_earthquake_data(self):
