@@ -3,27 +3,13 @@ import os
 import numpy as np
 
 class Datahandler():
-    def __init__(self, path, filename, profile_start, profile_end):
-        self.path = path
-        self.filename  = filename
-        self.data = self.load_earthquake_data()
+    def __init__(self, earthquake_data, profile_start, profile_end):
+        self.data = earthquake_data
         #Standardize depth values to positive
         if (self.data["Depth"] < 0).any():
             self.data["Depth"] = -self.data["Depth"]
 
         self.profile_start_km, self.profile_end_km = self.coordinates_to_km(profile_start, profile_end)
-
-    def load_earthquake_data(self):
-        file_path = os.path.join(self.path, self.filename)
-        try:
-            data = pd.read_csv(file_path, delimiter = ";")
-            required_columns = {"X", "Y", "Depth", 'Magnitude'}
-            if not required_columns.issubset(data.columns):
-                raise ValueError(f"Dataset must contain the columns: {required_columns}")
-            return data
-        except Exception as e:
-            print(f"Error loading earthquake data: {e}")
-            return pd.DataFrame()
     
     def coordinates_to_km(self, profile_start, profile_end):
         lon_to_km = 111.0 * np.cos(np.radians(profile_start[1])) #X coordinates, adjusting for variation in latitude

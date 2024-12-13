@@ -1,7 +1,9 @@
 {
     "data":{
         "earthquakes_path":"C:/Users/ecanc/OneDrive - Universidad EIA/PROYECTO_CARIBE/PAPER/03_Outputs/01_earthquakes/",
-        "earthquakes_file":"earthquakes_relocalized.csv"
+        "earthquakes_file":"earthquakes_relocalized.csv",
+        "fms_path":"C:/Users/ecanc/OneDrive - Universidad EIA/PROYECTO_CARIBE/PAPER/03_Outputs/03_moment_tensor/",
+        "fms_file":"FMS_ours.csv"
     },
     "point_profiles":{
         "profile_name":["AA'", "BB'", "CC'", "DD'", "EE'"],

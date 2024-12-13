@@ -3,6 +3,8 @@ from utils.config import Config
 from utils.data_handler import Datahandler
 from plotter import VerticalSection
 from focal_mechanism import FocalMechanism
+import pandas as pd
+import os
 
 def main():
     config_path = "config.json"
@@ -11,6 +13,15 @@ def main():
     config_data = config["data"]
     earthquake_path = config_data["earthquakes_path"]
     earthquake_file = config_data["earthquakes_file"]
+    file_path = os.path.join(earthquake_path, earthquake_file)
+    try:
+        earthquake_data = pd.read_csv(file_path, delimiter = ";")
+        required_columns = {"X", "Y", "Depth", "Magnitude"}
+        if not required_columns.issubset(earthquake_data.columns):
+            raise ValueError(f"Dataset must contain the columns: {required_columns}")
+    except Exception as e:
+        print(f"Error loading earthquake data: {e}")
+        earthquake_data = pd.DataFrame()
     #Point profiles
     config_point_profiles = config["point_profiles"]
     num_profiles = len(config_point_profiles["profile_start"])
@@ -23,7 +34,7 @@ def main():
         profile_width = config_point_profiles["profile_width"][i]
         profile_depth = config_point_profiles["profile_depth"][i]
         #Datahandler for this profile
-        datahandler = Datahandler(earthquake_path, earthquake_file, profile_start, profile_end) #Instance of datahandler for this profile
+        datahandler = Datahandler(earthquake_data, profile_start, profile_end) #Instance of datahandler for this profile
         projected_data = datahandler.project_onto_profile(profile_width, profile_depth)
         print(f"Total events: {len(datahandler.data)}. Total events in bounds of profile {i+1}: {len(projected_data)}")
         #Plot on specific subplot
@@ -31,8 +42,8 @@ def main():
         plotter = VerticalSection()
         plotter.draw_cross_section(ax, projected_data, profile_depth, profile_name)
     plt.tight_layout()
-    focal_mechanism = FocalMechanism()
-    focal_mechanism.plot_focal_mechanism_3d()
+    #focal_mechanism = FocalMechanism()
+    #focal_mechanism.plot_focal_mechanism_3d()
     plt.show()
     
 
