@@ -52,18 +52,21 @@ class Vectormath:
     
     def compute_rake_vector(self, plane_angles):
         strike, dip, rake = self.convert_deg_to_rad(plane_angles, self.deg)
-        """ rx = cos(rake) * sin(strike) + sin(rake) * cos(strike) * cos(dip) #range between -1 and 1
+        rx = cos(rake) * sin(strike) + sin(rake) * cos(strike) * cos(dip) #range between -1 and 1
         ry = cos(rake) * cos(strike) + sin(rake) * sin(strike) * cos(dip) #range between -1 and 1
         rz = sin(rake) * sin(dip) #range between -1 and 1
+        rx = rx
+        ry = -ry #Numerically fixed
+        rz = -rz #Numerically fixed
         rake_vector = np.array([rx, ry, rz])
-        rake_vector = self.normalize_vector(rake_vector) """
+        rake_vector = self.normalize_vector(rake_vector)
         #Sanity check: Rake vector should a linear combination of strike and dip vectors.  
         strike_vector = self.compute_strike_vector(plane_angles)
         dip_vector = self.compute_dip_vector(plane_angles)
-        rake_vector =  cos(rake) * strike_vector + sin(rake) * dip_vector
-        rake_vector = self.normalize_vector(rake_vector)
-        #rake_correct = np.isclose(rake_vector, rake_vector2)
-        #assert(rake_correct.all())
+        rake_vector2 =  cos(rake) * strike_vector + sin(rake) * dip_vector
+        rake_vector2 = self.normalize_vector(rake_vector)
+        rake_correct = np.isclose(rake_vector, rake_vector2)
+        assert(rake_correct.all())
         return rake_vector
     
     def compute_normal_vector(self, plane_angles):

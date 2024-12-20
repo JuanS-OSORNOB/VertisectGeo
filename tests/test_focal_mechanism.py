@@ -4,15 +4,15 @@ import matplotlib.pyplot as plt
 
 def test_focal_mechanism():
     #Plane1
-    strike1 = 95
-    dip1 = 34
-    rake1 = 300
+    strike1 = 36
+    dip1 = 70
+    rake1 = 82
     #Plane2
-    strike2 = 208
-    dip2 = 75
-    rake2 = 59
+    strike2 = 237
+    dip2 = 22
+    rake2 = 110
     #Kinematic axes
-    kinematic_axes = {'P':[321, 24], 'T':[83, 50], 'B':[217, 30]}
+    kinematic_axes = {'P':[132, 25], 'T':[293, 64], 'B':[39, 8]}
     
     focal_mechanism = FocalMechanism(strike1, dip1, rake1, strike2, dip2, rake2, kinematic_axes)
     vec_dict = focal_mechanism.create_vector_dict1()
