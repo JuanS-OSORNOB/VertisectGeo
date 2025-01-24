@@ -3,38 +3,25 @@ import os
 import numpy as np
 
 class Datahandler():
-    def __init__(self, path, filename, profile_start, profile_end):
-        self.path = path
-        self.filename  = filename
-        self.data = self.load_earthquake_data()
+    def __init__(self, earthquake_data, profile_start, profile_end):
+        self.data = earthquake_data
         #Standardize depth values to positive
         if (self.data["Depth"] < 0).any():
             self.data["Depth"] = -self.data["Depth"]
-        self.profile_start_km, self.profile_end_km = self.coordinates_to_km(profile_start, profile_end)
 
-    def load_earthquake_data(self):
-        file_path = os.path.join(self.path, self.filename)
-        try:
-            data = pd.read_csv(file_path, delimiter = ";")
-            required_columns = {"X", "Y", "Depth", 'Magnitude'}
-            if not required_columns.issubset(data.columns):
-                raise ValueError(f"Dataset must contain the columns: {required_columns}")
-            return data
-        except Exception as e:
-            print(f"Error loading earthquake data: {e}")
-            return pd.DataFrame()
+        self.profile_start_km, self.profile_end_km = self.coordinates_to_km(profile_start, profile_end)
     
     def coordinates_to_km(self, profile_start, profile_end):
         lon_to_km = 111.0 * np.cos(np.radians(profile_start[1])) #X coordinates, adjusting for variation in latitude
         lat_to_km = 111.0 #Y coordinates
-        self.data["X_km"] = self.data["X"] * lon_to_km
-        self.data["Y_km"] = self.data["Y"] * lat_to_km
+        self.data["X_km"] = self.data["Lon"] * lon_to_km
+        self.data["Y_km"] = self.data["Lat"] * lat_to_km
         profile_start_km = np.array(profile_start) * [lon_to_km, lat_to_km]
         profile_end_km = np.array(profile_end) * [lon_to_km, lat_to_km]
 
         return profile_start_km, profile_end_km
 
-    def filter_earthquakes(self, profile_width, profile_depth):
+    def filter_pts(self, profile_width, profile_depth):
         #Define profile vectors
         profile_vector = self.profile_end_km - self.profile_start_km
         profile_length = np.linalg.norm(profile_vector)
@@ -68,7 +55,7 @@ class Datahandler():
         return profile_vector_unit,  filtered_data
     
     def project_onto_profile(self, profile_width, profile_depth):
-        profile_vector_unit, filtered_data = self.filter_earthquakes(profile_width, profile_depth)
+        profile_vector_unit, filtered_data = self.filter_pts(profile_width, profile_depth)
         projected_data = filtered_data
         #projections = np.dot(filtered_data[["X_km", "Y_km"]].values - self.profile_start_km, profile_vector) / profile_length
         projections = np.dot(filtered_data[["X_km", "Y_km"]].values - self.profile_start_km, profile_vector_unit)
