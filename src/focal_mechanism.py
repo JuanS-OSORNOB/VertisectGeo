@@ -1,127 +1,152 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from scipy.spatial.transform import Rotation as R
+from math import sqrt
 from src.vector_math import Vectormath
 
 class FocalMechanism(Vectormath):
-    def __init__(self, strike1, dip1, rake1, strike2, dip2, rake2, kinematic_axes):
+    def __init__(self, radius, center, strike1, dip1, rake1, strike2, dip2, rake2, P_Az, P_pl, T_Az, T_pl, B_Az, B_pl):
         super().__init__()
-        self.plane_angles1 = [strike1, dip1, rake1]#TODO Consider negative rakes
-        self.plane_angles2 = [strike2, dip2, rake2]
-        self.kinematic_axes = kinematic_axes
+        self.radius = radius
+        self.center = center
+        self.strike1 = strike1
+        self.dip1 = dip1
+        self.rake1 = rake1
+        self.strike2 = strike2
+        self.dip2 = dip2
+        self.rake2 = rake2
+        self.P_Az = P_Az
+        self.P_pl = P_pl
+        self.T_Az = T_Az
+        self.T_pl = T_pl
+        self.B_Az = B_Az
+        self.B_pl = B_pl
+    #region Construc quadrants
     
-    def compute_kinematic_vector(self, axis_name):
-        return super().compute_kinematic_vector(self.kinematic_axes, axis_name)
-    
-    #region Plane1
-    def compute_strike_vector1(self):
-        return super().compute_strike_vector(self.plane_angles1)
-    
-    def compute_dip_vector1(self):
-        return super().compute_dip_vector(self.plane_angles1)
-    
-    def compute_normal_vector1(self):
-        return super().compute_normal_vector(self.plane_angles1)
-    
-    def compute_rake_vector1(self):
-        return super().compute_rake_vector(self.plane_angles1)
-    
-    def create_vector_dict1(self):
-        strike_vector = self.compute_strike_vector1()
-        dip_vector = self.compute_dip_vector1()
-        rake_vector = self.compute_rake_vector1()
-        normal_vector = self.compute_normal_vector1()
-        P_vector = self.compute_kinematic_vector("P")
-        T_vector = self.compute_kinematic_vector("T")
-        B_vector = self.compute_kinematic_vector("B")
-        #Assertion of kinematic vectors
-        P_vector2 = normal_vector - rake_vector
-        P_vector2 = P_vector2 / np.linalg.norm(P_vector2)
-        P_correct = np.isclose(P_vector, P_vector2)
-        assert(P_correct.all())
-        T_vector2 = normal_vector + rake_vector
-        T_vector2 = T_vector2 / np.linalg.norm(T_vector2)
-        T_correct = np.isclose(T_vector, T_vector2)
-        assert(T_correct.all())
-        B_vector2 = np.cross(T_vector, B_vector)
-        B_vector2 = P_vector2 / np.linalg.norm(B_vector2)
-        B_correct = np.isclose(B_vector, B_vector2)
-        assert(B_correct.all())
-        vector_dict = {'strike_vec': strike_vector,
-                        'dip_vec': dip_vector,
-                        'rake_vec':rake_vector,
-                        'normal_vec': normal_vector,
-                        'p_vec': P_vector,
-                        't_vec': T_vector,
-                        'b_vec': B_vector}
-        return vector_dict
-    #endregion
-    #region Plane2
-    def compute_strike_vector2(self):
-        return super().compute_strike_vector(self.plane_angles2)
-    
-    def compute_dip_vector2(self):
-        return super().compute_dip_vector(self.plane_angles2)
-    
-    def compute_normal_vector2(self):
-        return super().compute_normal_vector(self.plane_angles2)
-    
-    def compute_rake_vector2(self):
-        return super().compute_rake_vector(self.plane_angles2)
-    
-    def create_vector_dict2(self):
-        normal_vector = self.compute_normal_vector2()
-        strike_vector = self.compute_strike_vector2()
-        dip_vector = self.compute_dip_vector2()
-        rake_vector = self.compute_rake_vector2()
-        P_vector = self.compute_kinematic_vector("P")
-        T_vector = self.compute_kinematic_vector("T")
-        B_vector = self.compute_kinematic_vector("B")
+    def construct_quadrants(self, nodal_plane_sorted1, nodal_plane_sorted2):
+        first_half_projx1, first_half_projy1, second_half_projx1, second_half_projy1 = super().slice_circle(nodal_plane_sorted1)
+        first_half_projx2, first_half_projy2, second_half_projx2, second_half_projy2 = super().slice_circle(nodal_plane_sorted2)
+        #Points on the circle
+        S1_proj = np.array([first_half_projx1[0], first_half_projy1[0]])
+        neg_S1_proj = np.array([second_half_projx1[-1], second_half_projy1[-1]])
+        S2_proj = np.array([first_half_projx2[0], first_half_projy2[0]])
+        neg_S2_proj = np.array([second_half_projx2[-1], second_half_projy2[-1]])
+        #Verify the radius
+        radius_S1 = np.linalg.norm(S1_proj)
+        radius_neg_S1 = np.linalg.norm(neg_S1_proj)
+        radius_S2 = np.linalg.norm(S2_proj)
+        radius_neg_S2 = np.linalg.norm(neg_S2_proj)
+        radius = sqrt(2)
+        assert np.isclose(radius_S1, radius_S2, radius_neg_S1, radius_neg_S2, radius), "Points are not on the same circle."
+        #Create 4 arcs
+        arc1 = super().create_arc(S1_proj, S2_proj, radius)
+        arc2 = super().create_arc(S2_proj, neg_S1_proj, radius)
+        arc3 = super().create_arc(neg_S2_proj, neg_S1_proj, radius)
+        arc4 = super().create_arc(neg_S2_proj, S1_proj, radius)
+        #Create sides (in projected coordinates)
+        side_pts_first_half1 = np.vstack((first_half_projx1, first_half_projy1))
+        side_pts_second_half1 = np.vstack((second_half_projx1, second_half_projy1))
+        side_pts_first_half2 = np.vstack((first_half_projx2, first_half_projy2))
+        side_pts_second_half2 = np.vstack((second_half_projx2, second_half_projy2))
+        #Create polygons
+        polygon1 = arc1
+        if np.allclose(polygon1[:, -1], side_pts_first_half2[:, 0]):
+            polygon1 = np.hstack((polygon1, side_pts_first_half2[:, 1:], side_pts_first_half1[:, ::-1][:, 1:]))
+        else:
+            polygon1 = np.hstack((polygon1, side_pts_first_half1[:, 1:], side_pts_first_half2[:, ::-1][:, 1:]))
 
-        vector_dict = {'strike_vec': strike_vector,
-                        'dip_vec': dip_vector,
-                        'rake_vec':rake_vector,
-                        'normal_vec': normal_vector,
-                        'p_vec': P_vector,
-                        't_vec': T_vector,
-                        'b_vec': B_vector}
-        return vector_dict
-    #endregion
-    
-    #region Plots
-    def plot_focal_mechanism_3d(self, ax, radius = 1, num_pts = 100):
-        # Plot a sphere
-        phi, theta = np.mgrid[0:np.pi:100j, 0:2*np.pi:100j]
-        x = np.sin(phi) * np.cos(theta)
-        y = np.sin(phi) * np.sin(theta)
-        z = np.cos(phi)
-        ax.plot_surface(x, y, z, color='lightblue', alpha=0.1, edgecolor='k')
-        #Plot surface of fault plane
-        normal_vec = self.compute_normal_vector1()
-        phi = np.linspace(0, 2 * np.pi, num_pts)
-        circle = np.array([np.cos(phi), np.sin(phi), np.zeros_like(phi)]) #Unit circle in XY plane
-        z_axis = np.array([0, 0, 1])
-        rotation, _ = R.align_vectors([normal_vec], [z_axis]) #Rotate circle to align with normal
-        rotated_circle = rotation.apply(circle.T).T
-        nodal_plane = radius * rotated_circle
-        ax.plot_trisurf(nodal_plane[0], nodal_plane[1], nodal_plane[2], alpha=0.5) #Plot nodal fault plane
-        #Plot vectors
-        vector_dict = self.create_vector_dict1()
-        colors = plt.cm.tab10(np.linspace(0, 1, len(vector_dict))) #Generate unique color for each vector
-        for (name, vector), color in zip(vector_dict.items(), colors):
-            ax.quiver(0, 0, 0, vector[0], vector[1], vector[2], color = color, length = radius, label = name)
-        
-        #Labels and styling
-        ax.set_xlabel("X axis")
-        ax.set_ylabel("Y axis")
-        ax.set_zlabel("Z axis")
-        ax.set_title("3D Focal Mechanism")
-        ax.legend(loc = 'upper right')
-        ax.set_box_aspect([1, 1, 1])
-        
+        polygon2 = arc2
+        if np.allclose(polygon2[:, -1], side_pts_second_half1[:, -1]):
+            polygon2 = np.hstack((polygon2, side_pts_second_half1[:, ::-1][:, 1:-1], side_pts_first_half2[:, ::-1]))
+        else:
+            polygon2 = np.hstack((polygon2, side_pts_first_half2[:, 1:], side_pts_second_half1[:, 1:]))
 
+        polygon3 = arc3
+        if np.allclose(polygon3[:, -1], side_pts_second_half2[:, -1]):
+            polygon3 = np.hstack((polygon3, side_pts_second_half2[:, ::-1][:, 1:-1], side_pts_second_half1))
+        else:
+            polygon1 = np.hstack((polygon1, side_pts_second_half1[:, ::-1][:, 1:-1], side_pts_second_half2))
+
+        polygon4 = arc4
+        if np.allclose(polygon4[:, -1], side_pts_first_half1[:, 0]):
+            polygon4 = np.hstack((polygon4, side_pts_first_half1[:, 1:-1], side_pts_second_half2))
+        else:
+            polygon4 = np.hstack((polygon4, side_pts_second_half2[:, ::-1][:, 1:-1], side_pts_first_half1[:, ::-1]))
+
+        return polygon1, polygon2, polygon3, polygon4
     #endregion
+    #region Draw a single FM
+    def draw_rake(self, ax, axis, axis_name):
+        x, y, z = axis[0], axis[1], axis[2]
+        X, Y = super().lambert_projection(x, y, z)
+        projected_points = np.array([[X], [Y]])
+        #Scale and translate
+        scaled_pts = super().scale_points(projected_points, self.radius)
+        translated_pts = super().translate_points(scaled_pts, self.center)
+        ax.scatter(translated_pts[0], translated_pts[1], label = f"{axis_name}")
+        
+    def draw_kinematic_axis(self, ax, axis, axis_name):
+        x, y, z = axis[0], axis[1], axis[2]
+        X, Y = super().lambert_projection(x, y, z)
+        projected_points = np.array([[X], [Y]])
+        #Scale and translate
+        scaled_pts = super().scale_points(projected_points, self.radius)
+        translated_pts = super().translate_points(scaled_pts, self.center)
+        ax.scatter(translated_pts[0], translated_pts[1], label = f"{axis_name}", marker = 's')
     
-    
-    
+    def draw_focal_mechanism_filled(self, ax):
+        #fig = plt.figure(figsize=(8, 8))
+        #ax = fig.add_subplot(111)
+        #ax.scatter(0, 0)
+        #Plot origin
+        origin = np.array(self.center).reshape(2, 1)
+        ax.scatter(origin[0], origin[1], color = 'k')
+        #Fill up the polygons according to T location
+        T_vec = super().compute_kinematic_vector(self.T_Az, self.T_pl)
+        T_proj_x, T_proj_y = super().lambert_projection(T_vec[0], T_vec[1], T_vec[2])
+        T_proj = np.array([[T_proj_x], [T_proj_y]])
+        T_proj = super().scale_points(T_proj, self.radius)
+        T_proj = super().translate_points(T_proj, self.center)
+
+        nodal_plane1 = super().generate_plane_circle(self.strike1, self.dip1, self.B_Az, self.B_pl)
+        nodal_plane2 = super().generate_plane_circle(self.strike2, self.dip2, self.B_Az, self.B_pl)
+        polygon1, polygon2, polygon3, polygon4 = self.construct_quadrants(nodal_plane1, nodal_plane2)
+        #Scale and translate
+        polygon1, polygon2, polygon3, polygon4 = super().scale_points(polygon1, self.radius), super().scale_points(polygon2, self.radius), super().scale_points(polygon3, self.radius), super().scale_points(polygon4, self.radius)
+        polygon1, polygon2, polygon3, polygon4 = super().translate_points(polygon1, self.center), super().translate_points(polygon2, self.center), super().translate_points(polygon3, self.center), super().translate_points(polygon4, self.center)
+        polygons = [polygon1, polygon2, polygon3, polygon4]
+
+        containing_index = None
+        for i, polygon in enumerate(polygons):
+            if super().point_in_polygon(T_proj, polygon):
+                containing_index = i
+                break
+        if containing_index is not None:
+            second_index = (containing_index + 2) % len(polygons)
+            for i, polygon in enumerate(polygons):
+                if i == containing_index or i == second_index:
+                    ax.fill(polygon[0], polygon[1], color = f"black", zorder = 5)
+                else:
+                    ax.fill(polygon[0], polygon[1], color = f"white", edgecolor = f"black", zorder = 5)
+        #Draw the rake and kinematic axes
+        #self.draw_kinematic_axis(ax, T_vec,  "T")
+        #rake_vec1 = super().compute_rake_vector(self.strike1, self.dip1, self.rake1)
+        #self.draw_rake(ax, rake_vec1,  "Rake 1")
+        #rake_vec2 = super().compute_rake_vector(self.strike2, self.dip2, self.rake2)
+        #self.draw_rake(ax, rake_vec2,  "Rake 2")
+        #P_vec = super().compute_kinematic_vector(self.P_Az, self.P_pl)
+        #self.draw_kinematic_axis(ax, P_vec,  "P")
+        #B_vec = super().compute_kinematic_vector(self.B_Az, self.B_pl)
+        #self.draw_kinematic_axis(ax, B_vec,  "B")
+        #Add stereonet boundary
+        circle = plt.Circle(self.center, self.radius, color='black', fill=False, linewidth=1)
+        ax.add_artist(circle)
+        #Figure optionals
+        #ax.set_xlim(-self.radius, self.radius)
+        #ax.set_ylim(-self.radius, self.radius)
+        #ax.set_aspect('equal')
+        #ax.set_xlabel('x')
+        #ax.set_ylabel('y')
+        #ax.legend()
+        #plt.show()
+    #endregion
