@@ -3,7 +3,9 @@
         "earthquakes_path":"C:/Users/ecanc/OneDrive - Universidad EIA/PROYECTO_CARIBE/PAPER/03_Outputs/01_earthquakes/",
         "earthquakes_file":"earthquakes_relocalized.csv",
         "fms_path":"C:/Users/ecanc/OneDrive - Universidad EIA/PROYECTO_CARIBE/PAPER/03_Outputs/03_moment_tensor/",
-        "fms_file":"FMS_data.csv"
+        "fms_file":"FMS_data.csv",
+        "dem_path":"C:/Users/ecanc/OneDrive - Universidad EIA/PROYECTO_CARIBE/TRABAJO_DE_GRADO/DATOS/GEOREFERENCIADOS/batimetria_OLGA/",
+        "dem_file":"DEM_CARIBE.grd"
     },
     "point_profiles":{
         "profile_name":["AA'", "BB'", "CC'", "DD'", "EE'"],

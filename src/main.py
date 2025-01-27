@@ -9,8 +9,8 @@ import os
 def main():
     config_path = "config.json"
     config = Config.load_config(config_path)
-    #Earthquake Data
     config_data = config["data"]
+    #Earthquake Data
     earthquake_path = config_data["earthquakes_path"]
     earthquake_file = config_data["earthquakes_file"]
     earthquake_file_path = os.path.join(earthquake_path, earthquake_file)
@@ -32,10 +32,12 @@ def main():
     except Exception as e:
         print(f"Error loading focal mechanism data: {e}")
         fms_data = pd.DataFrame()
+    #Elevation data
+    grd_file = os.path.join(config_data["dem_path"], config_data["dem_file"])
     #Point profiles
     config_point_profiles = config["point_profiles"]
     num_profiles = len(config_point_profiles["profile_start"])
-    #Initialize figure
+    #Initialize figure and loop through each subplot
     fig, axes = plt.subplots(nrows = num_profiles, ncols = 1, figsize = (15, 9 * num_profiles))
     for i in range(num_profiles):
         profile_name = config_point_profiles["profile_name"][i]
@@ -54,16 +56,17 @@ def main():
         #Plot on specific subplot
         ax = axes[i] if num_profiles > 1 else axes #Handle single-profile case
         plotter = VerticalSection()
-        plotter.draw_fms_section(ax, projected_fms_data)
-        plotter.draw_earthquakes_section(ax, projected_earthquake_data)
-        ax.invert_yaxis()
-        ax.set_ylim(profile_depth, -10)
-        ax.set_aspect('equal')
+        #plotter.draw_fms_section(ax, projected_fms_data)
+        #plotter.draw_earthquakes_section(ax, projected_earthquake_data)
+        plotter.draw_height_profile(ax, grd_file, profile_start, profile_end)
+        #ax.invert_yaxis()
+        #ax.set_ylim(profile_depth, -10)
+        #ax.set_aspect('equal')
         ax.set_title(profile_name)
         ax.set_xlabel("Distance along profile (km)")
         ax.set_ylabel("Depth (km)")
         ax.grid(True)
-    #plt.tight_layout()
+    plt.tight_layout()
     #plt.subplots_adjust(hspace = 0.5)
     config_figure = config["figure_parameters"]
     figure_savepath = os.path.join(config_figure["figure_path"], config_figure["figure_name"])

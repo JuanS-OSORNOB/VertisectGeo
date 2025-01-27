@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from src.focal_mechanism import FocalMechanism
+from src.height_profile import Heightprofile
 
 class VerticalSection():
     def __init__(self, depth_bins = None, magnitude_bins = None, colors = None, sizes = None):
@@ -25,7 +26,7 @@ class VerticalSection():
         #projected_fms_data["radius"] = pd.cut(projected_fms_data["Magnitude"], bins = self.magnitude_bins, labels = self.sizes, include_lowest = True).astype(float)
         for i, focal_mech in projected_fms_data.iterrows():
             #radius = focal_mech["radius"]
-            radius = 25
+            radius = 20
             center = (focal_mech["Profile_X"], focal_mech["Depth"])
             strike1 = focal_mech["Strike_1"]
             dip1 = focal_mech["Dip_1"]
@@ -42,4 +43,11 @@ class VerticalSection():
 
             focal_mechanism = FocalMechanism(radius, center, strike1, dip1, rake1, strike2, dip2, rake2, P_Az, P_pl, T_Az, T_pl, B_Az, B_pl)
             focal_mechanism.draw_focal_mechanism_filled(ax)
+    #endregion
+    #region Height profile
+    def draw_height_profile(self, ax, grd_file, start_coords, end_coords):
+        heigth_profile = Heightprofile(grd_file, start_coords, end_coords)
+        distances, elevations = heigth_profile.extract_profile()
+        ax.plot(distances, elevations, label = "Elevation profile")
+
     #endregion
