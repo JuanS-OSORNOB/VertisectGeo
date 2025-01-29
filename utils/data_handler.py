@@ -6,8 +6,8 @@ class Datahandler():
     def __init__(self, earthquake_data, profile_start, profile_end):
         self.data = earthquake_data
         #Standardize depth values to positive
-        if (self.data["Depth"] < 0).any():
-            self.data["Depth"] = -self.data["Depth"]
+        """ if (self.data["Depth"] < 0).any():
+            self.data["Depth"] = -self.data["Depth"] """
 
         self.profile_start_km, self.profile_end_km = self.coordinates_to_km(profile_start, profile_end)
     
@@ -50,7 +50,7 @@ class Datahandler():
         coords = self.data[["X_km", "Y_km"]].values
         within_polygon = np.array([is_within_polygon(coord) for coord in coords])
         pre_filtered_data = self.data[within_polygon].copy()
-        filtered_data = pre_filtered_data[pre_filtered_data["Depth"] <= profile_depth]
+        filtered_data = pre_filtered_data[pre_filtered_data["Depth"] >= profile_depth]
 
         return profile_vector_unit,  filtered_data
     

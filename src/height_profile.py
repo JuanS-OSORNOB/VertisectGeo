@@ -8,10 +8,23 @@ class Heightprofile():
         self.start_coords = start_coords
         self.end_coords = end_coords
 
-    def coordinates_to_km(self, lon, lat):
-        lon_to_km = 111.0 * np.cos(np.radians(lat)) #X coordinates, adjusting for variation in latitude
-        lat_to_km = 111.0 #Y coordinates
-        return lon_to_km, lat_to_km
+    @staticmethod
+    def lon_to_km(lon):
+        scale_factor = 111.0  #X coordinates, adjusting for variation in latitude
+        lon_km = scale_factor * lon
+        return lon_km
+    
+    @staticmethod
+    def lat_to_km(lat):
+        scale_factor = 111.0
+        lat_km = scale_factor * lat #Y coordinates
+        return lat_km
+    
+    @staticmethod
+    def meters_to_km(depth):
+        scale_factor = 1/1000
+        depth_km = scale_factor * depth
+        return depth_km
     
     def read_grd_ascii(self, file_path):
         """Reads the grd file.
@@ -34,11 +47,12 @@ class Heightprofile():
 
             # Read grid dimensions
             nx, ny = map(int, f.readline().split())
+            #print(f"Grid nx, ny = {nx, ny}")
 
             # Read coordinate bounds
-            xmin, xmax = map(float, f.readline().split())
-            ymin, ymax = map(float, f.readline().split())
-
+            lon_min, lon_max = map(float, f.readline().split())
+            lat_min, lat_max = map(float, f.readline().split())
+            #print(f"Bounds coordinates (x-range), (y_range) = {lon_min, lon_max} {lat_min, lat_max}")
             # Read data range (not used in computation)
             zmin, zmax = map(float, f.readline().split())
 
@@ -47,20 +61,20 @@ class Heightprofile():
             for line in f:
                 # Split each line into float values and append to the list
                 data.extend(map(float, line.split()))
-
             # Check if the total number of values matches nx * ny
             if len(data) != nx * ny:
                 raise ValueError("Data size mismatch: expected {}, got {}.".format(nx * ny, len(data)))
 
             # Reshape into 2D grid (row-major order)
             data = np.array(data).reshape((ny, nx))
+            data_km = self.meters_to_km(data)
 
         # Create coordinates for grid
-        x = np.linspace(xmin, xmax, nx)
-        y = np.linspace(ymin, ymax, ny)
-        return x, y, data
+        lon_range = np.linspace(lon_min, lon_max, nx)
+        lat_range = np.linspace(lat_min, lat_max, ny)
+        return lon_range, lat_range, data_km
     
-    def extract_profile(self):
+    def extract_profile(self, num_pts = 500):
         """_summary_
 
         Args:
@@ -72,19 +86,18 @@ class Heightprofile():
         Returns:
             _type_: _description_
         """
-        x, y, data = self.read_grd_ascii(self.grd_file)
-
+        lon, lat, data_km = self.read_grd_ascii(self.grd_file)
         # Define the interpolator
-        interpolator = RegularGridInterpolator((y, x), data, bounds_error=False, fill_value=np.nan)
+        interpolator = RegularGridInterpolator((lat, lon), data_km, bounds_error=False, fill_value=np.nan)
 
         # Create a LineString and sample points along the line
         line = LineString([self.start_coords, self.end_coords])
-        num_points = 500  # Number of points along the profile
-        line_points = [line.interpolate(float(i) / num_points, normalized=True).coords[0] for i in range(num_points + 1)]
+        line_points = [line.interpolate(float(i) / num_pts, normalized=True).coords[0] for i in range(num_pts + 1)]
 
         # Extract elevations
         elevations = [interpolator((lat, lon)) for lon, lat in line_points]
+        elevations = np.array(elevations)
 
         # Return distances and elevations
-        distances = np.linspace(0, line.length, len(elevations))
+        distances = np.linspace(0, 111 * line.length, len(elevations))
         return distances, elevations

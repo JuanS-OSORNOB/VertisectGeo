@@ -56,16 +56,17 @@ def main():
         #Plot on specific subplot
         ax = axes[i] if num_profiles > 1 else axes #Handle single-profile case
         plotter = VerticalSection()
-        #plotter.draw_fms_section(ax, projected_fms_data)
-        #plotter.draw_earthquakes_section(ax, projected_earthquake_data)
-        plotter.draw_height_profile(ax, grd_file, profile_start, profile_end)
+        plotter.draw_fms_section(ax, projected_fms_data)
+        plotter.draw_earthquakes_section(ax, projected_earthquake_data)
+        max_exag_elev = plotter.draw_height_profile(ax, grd_file, profile_start, profile_end)
         #ax.invert_yaxis()
-        #ax.set_ylim(profile_depth, -10)
-        #ax.set_aspect('equal')
+        ax.set_ylim(profile_depth, max_exag_elev)
+        ax.set_aspect('equal')
         ax.set_title(profile_name)
         ax.set_xlabel("Distance along profile (km)")
         ax.set_ylabel("Depth (km)")
         ax.grid(True)
+        #ax.legend()
     plt.tight_layout()
     #plt.subplots_adjust(hspace = 0.5)
     config_figure = config["figure_parameters"]

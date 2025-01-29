@@ -6,7 +6,7 @@ from src.height_profile import Heightprofile
 
 class VerticalSection():
     def __init__(self, depth_bins = None, magnitude_bins = None, colors = None, sizes = None):
-        self.depth_bins = depth_bins or [0, 30, 70, 120, 180, 250]
+        self.depth_bins = depth_bins or [-250, -180, -120, -70, -30, 0]
         self.magnitude_bins = magnitude_bins or [0, 3, 4, 5, 6, 7]
         self.colors = colors or ["red", "orange", "yellow", "green", "blue"]
         self.sizes = sizes or [20, 50, 100, 200, 300]
@@ -26,7 +26,7 @@ class VerticalSection():
         #projected_fms_data["radius"] = pd.cut(projected_fms_data["Magnitude"], bins = self.magnitude_bins, labels = self.sizes, include_lowest = True).astype(float)
         for i, focal_mech in projected_fms_data.iterrows():
             #radius = focal_mech["radius"]
-            radius = 20
+            radius = 10
             center = (focal_mech["Profile_X"], focal_mech["Depth"])
             strike1 = focal_mech["Strike_1"]
             dip1 = focal_mech["Dip_1"]
@@ -45,9 +45,12 @@ class VerticalSection():
             focal_mechanism.draw_focal_mechanism_filled(ax)
     #endregion
     #region Height profile
-    def draw_height_profile(self, ax, grd_file, start_coords, end_coords):
+    def draw_height_profile(self, ax, grd_file, start_coords, end_coords, vertical_exa = 4):
         heigth_profile = Heightprofile(grd_file, start_coords, end_coords)
         distances, elevations = heigth_profile.extract_profile()
-        ax.plot(distances, elevations, label = "Elevation profile")
-
+        exaggerated_elevations = vertical_exa * elevations
+        ax.plot(distances, exaggerated_elevations, color = "red", label = "Elevation profile")
+        max_id_exa_elev = np.argmax(exaggerated_elevations)
+        max_exag_elev = exaggerated_elevations[max_id_exa_elev]
+        return max_exag_elev
     #endregion
