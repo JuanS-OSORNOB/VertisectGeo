@@ -16,6 +16,7 @@ class Config():
         try:
             with open(config_path, 'r') as f:
                 config = json.load(f)
+                #print("Opening config file")
                 return config
         except FileNotFoundError:
             print(f"Configuration file not found: {config_path}")

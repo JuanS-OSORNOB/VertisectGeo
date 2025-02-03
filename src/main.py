@@ -1,10 +1,11 @@
+import os
+import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
 from utils.config import Config
 from utils.data_handler import Datahandler
 from plotter import VerticalSection
-from focal_mechanism import FocalMechanism
-import pandas as pd
-import os
+from src.height_profile import Heightprofile
 
 def main():
     config_path = "config.json"
@@ -22,6 +23,7 @@ def main():
     except Exception as e:
         print(f"Error loading earthquake data: {e}")
         earthquake_data = pd.DataFrame()
+    print(f"Total events: {len(earthquake_data)}.")
     #Focal mechanism data
     fms_path = config_data["fms_path"]
     fms_file = config_data["fms_file"]
@@ -32,6 +34,7 @@ def main():
     except Exception as e:
         print(f"Error loading focal mechanism data: {e}")
         fms_data = pd.DataFrame()
+    print(f"Total FMS: {len(fms_data)}.")
     #Elevation data
     grd_file = os.path.join(config_data["dem_path"], config_data["dem_file"])
     #Point profiles
@@ -48,23 +51,33 @@ def main():
         #Earthquake datahandler for this profile
         earthquake_datahandler = Datahandler(earthquake_data, profile_start, profile_end) #Instance of earthquake_datahandler for this profile
         projected_earthquake_data = earthquake_datahandler.project_onto_profile(profile_width, profile_depth)
-        print(f"Total events: {len(earthquake_datahandler.data)}. Total events in bounds of profile {i + 1}: {len(projected_earthquake_data)}")
+        print(f"     Total events in bounds of profile {str(profile_name)}: {len(projected_earthquake_data)}")
         #FMS datahandler for this profile
         fms_datahandler = Datahandler(fms_data, profile_start, profile_end) #Instance of focal mechanism datahandler for this profile.
         projected_fms_data = fms_datahandler.project_onto_profile(profile_width, profile_depth)
-        print(f"Total FMS: {len(fms_datahandler.data)}. Total FMS in bounds of profile {i + 1}: {len(projected_fms_data)}\n")
+        print(f"     Total FMS in bounds of profile {str(profile_name)}: {len(projected_fms_data)}")
+        #Topography for this profile
+        heigth_profile = Heightprofile(grd_file, profile_start, profile_end)
+        distances, elevations = heigth_profile.extract_profile()
+        #Interpolate topography at Profile_X points and filter earthquakes below
+        interp_func = interp1d(distances, elevations, kind='linear', fill_value="extrapolate")
+        projected_earthquake_data["Topo_Elevation"] = interp_func(projected_earthquake_data["Profile_X"])
+        projected_earthquake_data = projected_earthquake_data[projected_earthquake_data["Depth"] < projected_earthquake_data["Topo_Elevation"]]
+        print(f"     Total events (filtered) in bounds of profile {profile_name}: {len(projected_earthquake_data)}\n")
         #Plot on specific subplot
         ax = axes[i] if num_profiles > 1 else axes #Handle single-profile case
         plotter = VerticalSection()
-        plotter.draw_fms_section(ax, projected_fms_data)
+        max_exag_elev = plotter.draw_height_profile(ax, distances, elevations)
+        #print(f"Min and max elevations (exaggerated) = {min_exag_elev, max_exag_elev}")
         plotter.draw_earthquakes_section(ax, projected_earthquake_data)
-        max_exag_elev = plotter.draw_height_profile(ax, grd_file, profile_start, profile_end)
+        plotter.draw_fms_section(ax, projected_fms_data)
         #ax.invert_yaxis()
         ax.set_ylim(profile_depth, max_exag_elev)
         ax.set_aspect('equal')
-        ax.set_title(profile_name)
-        ax.set_xlabel("Distance along profile (km)")
-        ax.set_ylabel("Depth (km)")
+        ax.tick_params(axis='both', labelsize=16)
+        ax.set_xlabel("Distance along profile (km)", fontsize = 20)
+        ax.set_ylabel("Depth (km)", fontsize = 20)
+        ax.set_title(profile_name, fontsize = 25)
         ax.grid(True)
         #ax.legend()
     plt.tight_layout()
@@ -73,7 +86,7 @@ def main():
     figure_savepath = os.path.join(config_figure["figure_path"], config_figure["figure_name"])
     plt.savefig(figure_savepath, dpi = 600)
     plt.show()
-    
+    print("FINISHED")
 
 if __name__ == "__main__":
     main()

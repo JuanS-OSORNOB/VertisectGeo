@@ -11,6 +11,7 @@ class Datahandler():
 
         self.profile_start_km, self.profile_end_km = self.coordinates_to_km(profile_start, profile_end)
     
+    
     def coordinates_to_km(self, profile_start, profile_end):
         lon_to_km = 111.0 * np.cos(np.radians(profile_start[1])) #X coordinates, adjusting for variation in latitude
         lat_to_km = 111.0 #Y coordinates

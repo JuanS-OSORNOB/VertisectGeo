@@ -2,14 +2,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from src.focal_mechanism import FocalMechanism
-from src.height_profile import Heightprofile
 
 class VerticalSection():
     def __init__(self, depth_bins = None, magnitude_bins = None, colors = None, sizes = None):
         self.depth_bins = depth_bins or [-250, -180, -120, -70, -30, 0]
         self.magnitude_bins = magnitude_bins or [0, 3, 4, 5, 6, 7]
-        self.colors = colors or ["red", "orange", "yellow", "green", "blue"]
-        self.sizes = sizes or [20, 50, 100, 200, 300]
+        #self.colors = colors or ["red", "orange", "yellow", "green", "blue"]
+        self.colors = colors or ["blue", "green", "yellow", "orange", "red"]
+        self.sizes = sizes or [40, 100, 200, 400, 600]
     #region Earthquakes plots
     def draw_earthquakes_section(self, ax, projected_earthquake_data):
         projected_earthquake_data["Color"] = pd.cut(projected_earthquake_data["Depth"], bins = self.depth_bins, labels = self.colors, include_lowest=True)
@@ -45,12 +45,14 @@ class VerticalSection():
             focal_mechanism.draw_focal_mechanism_filled(ax)
     #endregion
     #region Height profile
-    def draw_height_profile(self, ax, grd_file, start_coords, end_coords, vertical_exa = 4):
-        heigth_profile = Heightprofile(grd_file, start_coords, end_coords)
-        distances, elevations = heigth_profile.extract_profile()
+    def draw_height_profile(self, ax, distances, elevations, vertical_exa = 4):
         exaggerated_elevations = vertical_exa * elevations
-        ax.plot(distances, exaggerated_elevations, color = "red", label = "Elevation profile")
+        ax.plot(distances, exaggerated_elevations, color = "green", label = "Elevation profile")
+        ax.fill_between(distances, exaggerated_elevations, 0, where = (exaggerated_elevations > 0), color = "lightgreen", alpha = 0.5)
+        ax.fill_between(distances, exaggerated_elevations, 0, where = (exaggerated_elevations < 0), color = "blue", alpha = 0.5)
         max_id_exa_elev = np.argmax(exaggerated_elevations)
+        min_id_exa_elev = np.argmin(exaggerated_elevations)
         max_exag_elev = exaggerated_elevations[max_id_exa_elev]
+        min_exag_elev = exaggerated_elevations[min_id_exa_elev]
         return max_exag_elev
     #endregion
