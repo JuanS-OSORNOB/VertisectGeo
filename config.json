@@ -3,17 +3,19 @@
         "earthquakes_path":"C:/Users/ecanc/OneDrive - Universidad EIA/PROYECTO_CARIBE/PAPER/03_Outputs/01_earthquakes/",
         "earthquakes_file":"earthquakes_relocalized.csv",
         "fms_path":"C:/Users/ecanc/OneDrive - Universidad EIA/PROYECTO_CARIBE/PAPER/03_Outputs/03_moment_tensor/",
-        "fms_file":"FMS_data.csv"
+        "fms_file":"FMS_data.csv",
+        "dem_path":"C:/Users/ecanc/OneDrive - Universidad EIA/PROYECTO_CARIBE/TRABAJO_DE_GRADO/DATOS/GEOREFERENCIADOS/batimetria_OLGA/",
+        "dem_file":"DEM_CARIBE.grd"
     },
     "point_profiles":{
         "profile_name":["AA'", "BB'", "CC'", "DD'", "EE'"],
         "profile_start": [[-73.1, 13.01], [-74.5, 11.8], [-76.51, 10.74], [-79.06, 7.55], [-76.0, 8.06]],
         "profile_end": [[-71.61, 10.51], [-72.48, 9.51], [-74.52, 8.48], [-76.59, 10.57], [-71.7, 8.06]],
         "profile_width": [100.0, 100.0, 100.0, 100.0, 100.0],
-        "profile_depth": [250.0, 250.0, 250.0, 250.0, 250.0]
+        "profile_depth": [-250.0, -250.0, -250.0, -250.0, -250.0]
     },
     "figure_parameters":{
         "figure_path":"C:/Users/ecanc/OneDrive - Universidad EIA/PROYECTO_CARIBE/PAPER/07_Manuscript/FIGURES/05_DISCUSSION_CONCLUSION",
-        "figure_name":"figure_8.png"
+        "figure_name":"figure_8_stacked.png"
     }
 }
